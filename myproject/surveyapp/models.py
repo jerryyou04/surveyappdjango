@@ -2,11 +2,14 @@
 from django.db import models
 from django.core.serializers.json import DjangoJSONEncoder
 from decimal import Decimal
+import json 
 
 class Survey(models.Model):
     name = models.CharField(max_length=255)
     description = models.TextField(blank=True, null=True)
     structure = models.JSONField(help_text="Define the structure of the survey as JSON.")  # Using models.JSONField (Django 3.1+)
+
+    created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return self.name

@@ -63,7 +63,8 @@ def display_survey(request, survey_id):
     else:
         form = DynamicForm(form_structure=form_structure)
 
-    return render(request, 'surveyapp/display_survey.html', {'form': form, 'survey': survey_instance})
+    return render(request, 'surveyapp/display_survey.html', {'form': form, 'survey_instance': survey_instance})
+
 
 def survey_success(request):
     return render(request, 'surveyapp/survey_success.html')

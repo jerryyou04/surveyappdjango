@@ -113,6 +113,21 @@
             searchInput.addEventListener("input", filterSurveys);
         };
     </script>
+    <script>
+        // Clear the search field and reset the survey list
+        function clearSearch() {
+            const searchInput = document.getElementById("search");
+            searchInput.value = ""; // Clear the input field
+    
+            const surveys = document.querySelectorAll("ul li");
+            surveys.forEach(survey => {
+                survey.style.display = "block"; // Show all surveys
+            });
+    
+            // Delete the search cookie
+            document.cookie = "survey_search=; path=/; max-age=0";
+        }
+    </script>
 </head>
 <body>
     <h1>Available Surveys</h1>
@@ -123,6 +138,7 @@
             name="search"
             placeholder="Search surveys..."
         />
+        <button onclick="clearSearch()">X</button>
     </div>
     <ul>
         {% for survey in surveys %}
