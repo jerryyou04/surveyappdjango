@@ -125,14 +125,19 @@
             <div>
                 <label for="{{ field.id_for_label }}">{{ field.label }}</label>
                     {{ field }}
-                <div id="conditional-{{ field.name }}" class="conditional-field">
-                    <label for="issue_{{ field.name }}">Please describe the issue:</label>
-                    <textarea id="issue_{{ field.name }}" name="issue_{{ field.name }}" rows="4" required></textarea>
-
-                    <label for="action_{{ field.name }}" style="margin-top: 1em;">What action was taken?</label>
-                    <textarea id="action_{{ field.name }}" name="action_{{ field.name }}" rows="4" required></textarea>
-                    <button type="button" class="autofill-button" onclick="autofillAction('{{ field.name }}')">Autofill: Contacted Team Leader / Manager</button>
-                </div>
+                    {% if field.field.widget.input_type == 'radio' %}
+                    <div id="conditional-{{ field.name }}" class="conditional-field" style="display: none;">
+                        <label for="issue_{{ field.name }}">Please describe the issue:</label>
+                        <textarea id="issue_{{ field.name }}" name="issue_{{ field.name }}" rows="4" required></textarea>
+                
+                        <label for="action_{{ field.name }}" style="margin-top: 1em;">What action was taken?</label>
+                        <textarea id="action_{{ field.name }}" name="action_{{ field.name }}" rows="4" required></textarea>
+                
+                        <button type="button" class="autofill-button" onclick="autofillAction('{{ field.name }}')">
+                            Autofill: Contacted Team Leader / Manager
+                        </button>
+                    </div>
+                {% endif %}                
             </div>
         {% endfor %}
         <button type="submit">Submit</button>
@@ -141,29 +146,42 @@
     <a href="/survey">Discard Progress and go back to Surveys</a>
 
     <script>
-        // Dynamically handle all choice fields with "No" responses
-        const allChoiceFields = document.querySelectorAll('input[type="radio"]');
-    
-        allChoiceFields.forEach(radio => {
-            radio.addEventListener("change", function () {
-                const questionName = this.name; // Get the name of the question
-                const conditionalField = document.getElementById(`conditional-${questionName}`);
-                const issueField = document.getElementById(`issue_${questionName}`);
-                const actionField = document.getElementById(`action_${questionName}`);
-    
-                if (this.value === "No") {
-                    // Show the conditional fields and make them required
-                    conditionalField.style.display = "block";
-                    issueField.setAttribute("required", "true");
-                    actionField.setAttribute("required", "true");
-                } else {
-                    // Hide the conditional fields and remove the required attribute
-                    conditionalField.style.display = "none";
-                    issueField.removeAttribute("required");
-                    actionField.removeAttribute("required");
+        document.addEventListener("DOMContentLoaded", () => {
+            const form = document.querySelector("form");
+            const radioButtons = document.querySelectorAll('input[type="radio"]');
+
+            radioButtons.forEach(radio => {
+                if (radio.value === "Yes" || radio.value === "No") {
+                    radio.addEventListener("change", function () {
+                        const questionName = this.name;
+                        const conditionalField = document.getElementById(`conditional-${questionName}`);
+                        const issueField = document.getElementById(`issue_${questionName}`);
+                        const actionField = document.getElementById(`action_${questionName}`);
+
+                        if (this.value === "No") {
+                            conditionalField.style.display = "block";
+                            issueField.setAttribute("required", "true");
+                            actionField.setAttribute("required", "true");
+                        } else {
+                            conditionalField.style.display = "none";
+                            issueField.removeAttribute("required");
+                            actionField.removeAttribute("required");
+                        }
+                    });
                 }
             });
+
+            // Before form submission, remove required attributes from hidden fields
+            form.addEventListener("submit", function () {
+                document.querySelectorAll(".conditional-field").forEach(conditionalField => {
+                    if (conditionalField.style.display === "none") {
+                        const inputs = conditionalField.querySelectorAll("textarea");
+                        inputs.forEach(input => input.removeAttribute("required"));
+                    }
+                });
+            });
         });
+
 
         function autofillAction(fieldName) {
             const actionField = document.getElementById(`action_${fieldName}`);
