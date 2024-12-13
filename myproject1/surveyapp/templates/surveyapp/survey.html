@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+
+{% block title %}Available Surveys{% endblock %}
+
+{% block content %}
+<div class="container-fluid my-5">
+    <div class="row">
+        <!-- Main Content: Available Surveys -->
+        <div class="col-lg-8">
+            <h1 class="display-4 text-primary mb-4">Available Surveys</h1>
+
+            <!-- Search Bar -->
+            <div class="input-group mb-4">
+                <input 
+                    type="text" 
+                    id="search" 
+                    name="search" 
+                    class="form-control" 
+                    placeholder="Search surveys by name or cell..."
+                    hx-get="{% url 'surveyapp:survey_list' %}" 
+                    hx-trigger="input delay:300ms" 
+                    hx-target="#survey-list" 
+                    hx-include="#search"
+                    hx-vals='{"target": "surveys"}'
+                    oninput="setSearchCookie()"
+                />
+                <button class="btn btn-outline-secondary" onclick="clearSearch()">Clear</button>
+            </div>
+
+            <!-- Survey List -->
+            <div id="survey-list">
+                {% include 'surveyapp/partials/survey_list.html' %}
+            </div>
+        </div>
+
+        <!-- Sidebar: Last 5 Submitted Answers -->
+        <div class="col-lg-4">
+            <div class="bg-white p-4 rounded shadow">
+                <h2 class="h4 text-primary mb-4">Your Last 5 Submitted Answers</h2>
+                <div id="answers-list">
+                    {% include 'surveyapp/partials/answers_list.html' %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Additional HTMX trigger for updating answers -->
+<input 
+    type="hidden" 
+    id="fetch-answers" 
+    hx-get="{% url 'surveyapp:survey_list' %}" 
+    hx-trigger="input delay:300ms from:#search" 
+    hx-target="#answers-list" 
+    hx-include="#search" 
+    hx-vals='{"target": "answers"}'
+/>
+
+<!-- Include HTMX -->
+<script src="https://unpkg.com/htmx.org@1.9.12"></script>
+
+<script>
+    // Function to set the search query in a cookie (expires in 1 day)
+    function setSearchCookie() {
+        const searchValue = document.getElementById("search").value;
+        document.cookie = `search_query=${encodeURIComponent(searchValue)}; path=/; max-age=86400`; // 1 day
+    }
+
+    // Function to get the search query from a cookie
+    function getSearchCookie() {
+        const cookies = document.cookie.split('; ');
+        for (let cookie of cookies) {
+            const [name, value] = cookie.split('=');
+            if (name === 'search_query') {
+                return decodeURIComponent(value);
+            }
+        }
+        return '';
+    }
+
+    // Function to clear the search input and delete the cookie
+    function clearSearch() {
+        document.getElementById("search").value = "";
+        document.cookie = 'search_query=; path=/; max-age=0'; // Delete the cookie
+        htmx.trigger("#search", "input");
+        htmx.trigger("#fetch-answers", "input");
+    }
+
+    // Load the search query from the cookie on page load
+    document.addEventListener("DOMContentLoaded", () => {
+        const savedSearch = getSearchCookie();
+        if (savedSearch) {
+            document.getElementById("search").value = savedSearch;
+            htmx.trigger("#search", "input");
+            htmx.trigger("#fetch-answers", "input");
+        }
+    });
+</script>
+{% endblock %}
