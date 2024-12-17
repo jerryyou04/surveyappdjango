@@ -33,12 +33,14 @@ class DynamicForm(forms.Form):
             # Handle different field types
             if field_type == 'text':
                 self.fields[field_name] = forms.CharField(label=field_label, required=required)
+                widget=forms.TextInput(attrs={'class': 'form-control'})
             elif field_type == 'number':
                 min_value = field.get('min')
                 max_value = field.get('max')
                 self.fields[field_name] = forms.IntegerField(
                     label=field_label, required=required, min_value=min_value, max_value=max_value
                 )
+                widget=forms.NumberInput(attrs={'class': 'form-control'})
             elif field_type == 'choice':
                 choices = field.get('choices', [])
                 self.fields[field_name] = forms.ChoiceField(
@@ -56,7 +58,7 @@ class DynamicForm(forms.Form):
             elif field_type == 'textarea':
                 self.fields[field_name] = forms.CharField(
                     label=field_label, required=required,
-                    widget=forms.Textarea
+                    widget=forms.Textarea(attrs={'class': 'form-control'})
                 )
             else:
                 raise ValueError(f"Unsupported field type: {field_type}")

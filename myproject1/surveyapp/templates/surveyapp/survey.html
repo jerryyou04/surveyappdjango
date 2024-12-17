@@ -1,13 +1,13 @@
 {% extends 'base.html' %}
 
-{% block title %}Available Surveys{% endblock %}
+{% block title %}Available TPMs{% endblock %}
 
 {% block content %}
 <div class="container-fluid my-5">
     <div class="row">
         <!-- Main Content: Available Surveys -->
         <div class="col-lg-8">
-            <h1 class="display-4 text-primary mb-4">Available Surveys</h1>
+            <h1 class="display-4 text-primary mb-4">Available TPMs (Displaying 30)</h1>
 
             <!-- Search Bar -->
             <div class="input-group mb-4">
@@ -36,7 +36,7 @@
         <!-- Sidebar: Last 5 Submitted Answers -->
         <div class="col-lg-4">
             <div class="bg-white p-4 rounded shadow">
-                <h2 class="h4 text-primary mb-4">Your Last 5 Submitted Answers</h2>
+                <h2 class="h4 text-primary mb-4">Last 5 Submitted Answers</h2>
                 <div id="answers-list">
                     {% include 'surveyapp/partials/answers_list.html' %}
                 </div>
