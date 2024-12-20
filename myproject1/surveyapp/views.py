@@ -96,7 +96,7 @@ def survey_list(request):
     search_query = request.GET.get("search", "").strip()
 
     # Retrieve all surveys and answers
-    surveys = Survey.objects.all()
+    surveys = Survey.objects.all().order_by('sort_order', 'name', 'cell')
     answers = Answer.objects.all().order_by('-created_at')
 
     if search_query:
@@ -154,12 +154,12 @@ def show_conditional_fields(request, field_name):
             hx-get="{autofill_url}" 
             hx-target="#action_{field_name}" 
             hx-swap="innerHTML">
-            Autofill: Contacted Team Leader / Manager
+            Autofill: Contacted Team Leader / Supervisor
         </button>
     """)
 
 def autofill_action(request, field_name):
-    return HttpResponse("Contacted Team Leader / Manager")
+    return HttpResponse("Contacted Team Leader / Supervisor")
 
 @login_required
 def profile(request):

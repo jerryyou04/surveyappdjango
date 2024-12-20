@@ -72,3 +72,10 @@ class QuestionAnswer(CommonFields):
 
     def __str__(self):
         return f"Answer to {self.question_text} (Survey: {self.survey.name})"
+
+class choice_tbl(models.Model):
+    choice_tbl_grouping = models.CharField(max_length=100)  
+    choice_name = models.CharField(max_length=100)          
+
+    def __str__(self):
+        return self.choice_name

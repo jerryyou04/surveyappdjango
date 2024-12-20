@@ -1,21 +1,23 @@
 from django.contrib import admin
 from django import forms
 from django.db import models
+
 from django_svelte_jsoneditor.widgets import SvelteJSONEditorWidget
+from .widgets import CustomSvelteJSONEditorWidget
+from django_json_widget.widgets import JSONEditorWidget
 
 from django.forms import Textarea
-from .models import Survey, Answer, QuestionAnswer
+from .models import Survey, Answer, QuestionAnswer, choice_tbl
 
-from .widgets import CustomSvelteJSONEditorWidget
+
+
 class SurveyForm(forms.ModelForm):
-    structure = forms.JSONField(
-        widget=CustomSvelteJSONEditorWidget(),
-        help_text="Define the structure of the survey as JSON."
-    )
-
     class Meta:
         model = Survey
         fields = '__all__'
+        widgets = {
+            'structure': JSONEditorWidget,
+        }
 
 
 class SurveyAdmin(admin.ModelAdmin):
@@ -30,6 +32,7 @@ class SurveyAdmin(admin.ModelAdmin):
         css = {
             'all': ('surveyapp/css/custom_admin.css',)
         }
+        js = ('surveyapp/js/json_editor_maximize.js',)
 
     # Customize the form layout in the admin
     fieldsets = (
@@ -95,8 +98,14 @@ class QuestionAnswerAdmin(admin.ModelAdmin):
         queryset.update(status_by_admin='closed')
     set_status_closed.short_description = "Mark selected items as Closed"
 
+class ChoiceTblAdmin(admin.ModelAdmin):
+    list_display = ('choice_tbl_grouping', 'choice_name')  # Display these fields in the admin list view
+    search_fields = ('choice_tbl_grouping', 'choice_name')  # Add search functionality
+    list_filter = ('choice_tbl_grouping',)  # Add a filter sidebar by grouping
+
 
 # Register models with the admin site
 admin.site.register(Survey, SurveyAdmin)
 admin.site.register(Answer, AnswerAdmin)
 admin.site.register(QuestionAnswer, QuestionAnswerAdmin)
+admin.site.register(choice_tbl, ChoiceTblAdmin)

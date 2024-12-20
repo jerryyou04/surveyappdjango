@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'surveyapp',
     'django_svelte_jsoneditor',
+    'django_json_widget',
 ]
 
 MIDDLEWARE = [

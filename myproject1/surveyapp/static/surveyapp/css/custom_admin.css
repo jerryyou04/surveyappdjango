@@ -1,4 +1,51 @@
-.svelte-jsoneditor {
+/* Full-screen JSON editor styling */
+.jsoneditor.fullscreen {
+    position: fixed;
+    top: 0;
+    left: 0;
     width: 100%;
-    height: 400px;  /* Or your preferred height */
+    height: 100%;
+    z-index: 9999;
+    background-color: white;
+    padding: 10px;
+    box-sizing: border-box;
+    overflow: auto;
 }
+
+/* Ensure the editor adjusts to full-screen */
+.jsoneditor.fullscreen .jsoneditor-outer {
+    width: 100%;
+    height: 100%;
+}
+
+.maximize-btn {
+    margin-bottom: 10px;
+    display: inline-block;
+    cursor: pointer;
+    padding: 5px 15px;
+    background-color: rgb(65, 118, 144);  /* Normal button color */
+    color: #fff;                          /* White text */
+    border: 1px solid rgb(65, 118, 144);  /* Matching border */
+    border-radius: 4px;
+    font-size: 13px;
+    font-weight: normal;
+    text-decoration: none;
+    text-transform: none;
+    transition: background-color 0.2s, border-color 0.2s;
+}
+
+/* Hover effect to match Django admin buttons */
+.maximize-btn:hover {
+    background-color: rgb(32, 80, 103);   /* Hover button color */
+    border-color: rgb(32, 80, 103);
+}
+
+/* Button style when in full-screen mode */
+.fullscreen-button {
+    position: fixed;
+    top: 15px;
+    left: 50%;                    /* Position the button at the center of the screen */
+    transform: translateX(-50%);  /* Shift the button left by 50% of its width to center it */
+    z-index: 10002;
+}
+
