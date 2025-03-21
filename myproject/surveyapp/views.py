@@ -4,7 +4,10 @@ from django.http import JsonResponse
 from .models import Survey, Answer, QuestionAnswer
 from .forms import DynamicForm
 from django.db.models import Q
+from django.urls import reverse
+from django.contrib.auth.decorators import login_required
 
+@login_required
 def display_survey(request, survey_id):
     # Retrieve the survey instance
     survey_instance = get_object_or_404(Survey, pk=survey_id)
@@ -47,7 +50,8 @@ def display_survey(request, survey_id):
             # Save the response in the Answer model
             answer_instance = Answer.objects.create(
                 survey=survey_instance,
-                response_data=response_data
+                response_data=response_data,
+                user=request.user 
             )
 
             # Save each question-answer as a separate entry in the QuestionAnswer model
@@ -58,6 +62,10 @@ def display_survey(request, survey_id):
                 if question:
                     issue = request.POST.get(f"issue_{field_name}")
                     action_taken = request.POST.get(f"action_{field_name}")
+                    if issue or action_taken:
+                        status_by_admin = 'open'
+                    else:
+                        status_by_admin = 'closed'
 
                     QuestionAnswer.objects.create(
                         survey=survey_instance,
@@ -66,27 +74,13 @@ def display_survey(request, survey_id):
                         answer = answer_instance,
                         response=user_answer,
                         issue=issue if user_answer == "No" else None,
-                        action_taken=action_taken if user_answer == "No" else None
+                        action_taken=action_taken if user_answer == "No" else None,
+                        status_by_admin=status_by_admin,
+                        user=request.user 
                     )
             
             return redirect('surveyapp:survey_success')
-            #  # Store the Answer ID in a cookie
-            # response = redirect('surveyapp:survey_success')
 
-            # # Get existing submitted answer IDs from cookies
-            # submitted_answers = request.COOKIES.get('submitted_answers', '[]')
-            # submitted_answers = json.loads(submitted_answers)
-
-            # # Add the new Answer ID
-            # submitted_answers.append(answer_instance.id)
-
-            # # Keep only the last 5 submissions
-            # submitted_answers = submitted_answers[-5:]
-
-            # # Set the updated cookie (expires in 1 year)
-            # response.set_cookie('submitted_answers', json.dumps(submitted_answers), max_age=31536000)
-
-            # return response
     else:
         form = DynamicForm(form_structure=form_structure)
 
@@ -96,63 +90,77 @@ def display_survey(request, survey_id):
 def survey_success(request):
     return render(request, 'surveyapp/survey_success.html')
 
+
 def survey_list(request):
+    # Get the search query from the request
     search_query = request.GET.get("search", "").strip()
 
-    # Retrieve all surveys
-    surveys = Survey.objects.all()
-    print(f"All Surveys: {surveys}")
+    # Retrieve all surveys and answers
+    surveys = Survey.objects.all().order_by('sort_order', 'name', 'cell')
+    answers = Answer.objects.all().order_by('-created_at')
 
     if search_query:
         # Split the search query into individual terms
         search_terms = search_query.split()
-        print(f"Search Terms: {search_terms}")
 
-        # Build Q objects to match all terms across name and cell fields
+        # Build Q objects to match all terms across name and cell fields for surveys and answers
         survey_search_q = Q()
+        answer_search_q = Q()
+
         for term in search_terms:
-            survey_search_q &= Q(name__icontains=term.strip()) | Q(cell__icontains=term.strip())
+            survey_search_q &= Q(name__icontains=term) | Q(cell__icontains=term)
+            answer_search_q &= Q(survey__name__icontains=term) | Q(survey__cell__icontains=term)
 
-        # Filter surveys based on the combined Q object
+        # Filter surveys and answers based on the combined Q objects
         surveys = surveys.filter(survey_search_q)
-        print(f"Filtered Surveys: {surveys}")
+        answers = answers.filter(answer_search_q)
 
-    # For AJAX request: filter answers and return JSON
-    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-        answers = Answer.objects.all()
+    # Slice after filtering to get the latest 5 answers
+    answers = answers[:5]
+    surveys = surveys[:30]
 
-        if search_query:
-            answer_search_q = Q()
-            for term in search_terms:
-                answer_search_q &= Q(survey__name__icontains=term) | Q(survey__cell__icontains=term)
+    # Handle HTMX requests separately for surveys and answers
+    if request.headers.get('HX-Request'):
+        target = request.GET.get('target', '')
+        if target == 'answers':
+            return render(request, "surveyapp/partials/answers_list.html", {"answers": answers})
+        return render(request, "surveyapp/partials/survey_list.html", {"surveys": surveys})
 
-            # Apply the filter to answers and get the latest 5 matches
-            answers = answers.filter(answer_search_q).order_by('-submitted_at')[:5]
-        else:
-            # If no search term, get the latest 5 answers
-            answers = answers.order_by('-submitted_at')[:5]
-
-        # Serialize answers to JSON
-        answers_data = [
-            {
-                'survey_name': answer.survey.name,
-                'survey_cell': answer.survey.cell,
-                'submitted_at': answer.submitted_at.strftime("%Y-%m-%d %H:%M:%S"),
-                'response_data': answer.response_data
-            }
-            for answer in answers
-        ]
-
-        return JsonResponse({'answers': answers_data})
-
-    # Regular page load
+    # For a regular page load, render the full template
     return render(request, "surveyapp/survey.html", {
-        "surveys": surveys,
-        "answers": Answer.objects.all().order_by('-submitted_at')[:5],
+        "surveys": surveys[:30],  # Limit to 30 surveys for the full page load
+        "answers": answers,
     })
-
 
 
 
 def index(request):
     return render(request, 'surveyapp/index.html')
+
+def show_conditional_fields(request, field_name):
+    autofill_url = reverse('surveyapp:autofill_action', args=[field_name])
+    return HttpResponse(f"""
+        <div class="mb-3">
+            <label for="issue_{field_name}" class="form-label">Please describe the issue:</label>
+            <textarea id="issue_{field_name}" name="issue_{field_name}" class="form-control" rows="4" required></textarea>
+        </div>
+
+        <div class="mb-3">
+            <label for="action_{field_name}" class="form-label">What action was taken?</label>
+            <textarea id="action_{field_name}" name="action_{field_name}" class="form-control" rows="4" required></textarea>
+        </div>
+
+        <button type="button" class="btn btn-sm btn-primary mt-2" 
+            hx-get="{autofill_url}" 
+            hx-target="#action_{field_name}" 
+            hx-swap="innerHTML">
+            Autofill: Contacted Team Leader / Supervisor
+        </button>
+    """)
+
+def autofill_action(request, field_name):
+    return HttpResponse("Contacted Team Leader / Supervisor")
+
+@login_required
+def profile(request):
+    return render(request, 'registration/profile.html')

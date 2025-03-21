@@ -1,0 +1,19 @@
+<!-- accounts/templates/accounts/profile.html -->
+{% extends 'surveyapp/base.html' %}
+
+{% block title %}Profile{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2 class="mb-4">Your Profile</h2>
+    <p><strong>Username:</strong> {{ user.username }}</p>
+    <p><strong>Full Name:</strong> {{ user.get_full_name|default:"N/A" }}</p>
+    <p><strong>Email:</strong> {{ user.email|default:"N/A" }}</p>
+
+    <!-- Logout Form -->
+    <form method="post" action="{% url 'logout' %}" class="mt-3">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">Logout</button>
+    </form>
+</div>
+{% endblock %}

@@ -1,292 +1,99 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Available Surveys</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #f4f4f9;
-            color: #333;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 2em 0;
-        }
-        h1 {
-            font-size: 2.5em;
-            margin-bottom: 1em;
-            color: #007BFF;
-        }
-        ul {
-            list-style: none;
-            padding: 0;
-            width: 100%;
-            max-width: 600px;
-        }
-        li {
-            background: white;
-            padding: 1.5em;
-            margin-bottom: 1em;
-            border-radius: 8px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
-        li:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-        }
-        a {
-            text-decoration: none;
-            color: #007BFF;
-            font-size: 1.2em;
-            font-weight: bold;
-        }
-        a:hover {
-            text-decoration: underline;
-        }
-        p {
-            margin-top: 0.5em;
-            font-size: 1em;
-            color: #555;
-        }
-        .search-bar {
-            margin-bottom: 2em;
-            display: flex;
-            align-items: center;
-            gap: 1em;
-        }
-        input[type="text"] {
-            padding: 0.75em;
-            font-size: 1em;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            width: 300px;
-        }
+{% extends 'base.html' %}
 
-    .submitted-answers {
-    margin-top: 2em;
-    width: 100%;
-    max-width: 600px;
-    background: white;
-    padding: 1em;
-    border-radius: 8px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-    }
-    .submitted-answers h2 {
-        font-size: 1.5em;
-        color: #007BFF;
-    }
-    .submitted-answers ul {
-        list-style: none;
-        padding: 0;
-    }
-    .submitted-answers li {
-        padding: 0.5em 0;
-        border-bottom: 1px solid #ddd;
-    }
-    .submitted-answers li:last-child {
-        border-bottom: none;
-    }
-    .submitted-answers pre {
-        background: #f4f4f9;
-        padding: 1em;
-        border-radius: 4px;
-        white-space: pre-wrap;
-        word-wrap: break-word;
-        font-family: monospace;
-        font-size: 0.9em;
-    }
+{% block title %}Available TPMs{% endblock %}
 
-    /* Container for the main content and sidebar */
-    .container {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        gap: 2em;
-        width: 100%;
-        max-width: 1200px;
-        margin: 0 auto;
-    }
+{% block content %}
+<div class="container-fluid my-5">
+    <div class="row">
+        <!-- Main Content: Available Surveys -->
+        <div class="col-lg-8">
+            <h1 class="display-4 text-primary mb-4"> Available TPMs <small style="font-size: 0.6em;">(showing first 30)</small></h1>
 
-    /* Main content styling */
-    .main-content {
-        flex: 3;
-        background: white;
-        padding: 1.5em;
-        border-radius: 8px;
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-    }
-
-    /* Sidebar styling */
-    .sidebar {
-        flex: 1.5;
-        background: #f4f4f9;
-        padding: 1em;
-        border-radius: 8px;
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-        position: sticky;
-        top: 2em;
-        height: fit-content;
-        max-height: 80vh;
-        overflow-y: auto;
-    }
-
-    .sidebar h2 {
-        font-size: 1.5em;
-        color: #007BFF;
-        margin-bottom: 1em;
-    }
-
-    .sidebar ul {
-        list-style: none;
-        padding: 0;
-    }
-
-    .sidebar li {
-        padding: 1em 0;
-        border-bottom: 1px solid #ddd;
-    }
-
-    .sidebar li:last-child {
-        border-bottom: none;
-    }
-
-    .sidebar pre {
-        background: #fff;
-        padding: 0.75em;
-        border: 1px solid #ddd;
-        border-radius: 4px;
-        white-space: pre-wrap;
-        word-wrap: break-word;
-        font-family: monospace;
-        font-size: 0.9em;
-    }
-
-    </style>
-<script>
-    let debounceTimer;
-
-    // Debounced function to fetch answers and filter surveys
-    function debounceFetchAnswers() {
-        clearTimeout(debounceTimer);
-        debounceTimer = setTimeout(() => {
-            filterSurveys();
-            fetchAnswers();
-        }, 300); // 300 milliseconds delay
-    }
-
-    // Function to fetch answers via AJAX
-    function fetchAnswers() {
-        const searchTerm = document.getElementById("search").value.trim();
-
-        fetch(`/survey/?search=${encodeURIComponent(searchTerm)}`, {
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest'
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            const answersList = document.getElementById("answers-list");
-            answersList.innerHTML = "";
-
-            if (data.answers.length > 0) {
-                data.answers.forEach(answer => {
-                    const listItem = document.createElement("li");
-                    listItem.innerHTML = `
-                        <h2>${answer.survey_name}</h2>
-                        <h3>${answer.survey_cell}</h3>
-                        <p>Submitted at: ${answer.submitted_at}</p>
-                        <pre>${JSON.stringify(answer.response_data, null, 2)}</pre>
-                    `;
-                    answersList.appendChild(listItem);
-                });
-            } else {
-                answersList.innerHTML = "<li>No recent submissions.</li>";
-            }
-        })
-        .catch(error => console.error("Error fetching answers:", error));
-    }
-
-    // Function to filter surveys dynamically
-    function filterSurveys() {
-    const searchTerm = document.getElementById("search").value.toLowerCase().trim();
-    const searchTerms = searchTerm.split(/\s+/); // Split by spaces to get individual terms
-    const surveys = document.querySelectorAll("#survey-list li");
-
-    surveys.forEach(survey => {
-        const surveyName = survey.querySelector("a").textContent.toLowerCase();
-        const surveyCell = survey.querySelector(".cell").textContent.toLowerCase();
-
-        // Check if all search terms match either the name or the cell
-        const matchesAllTerms = searchTerms.every(term => surveyName.includes(term) || surveyCell.includes(term));
-
-        survey.style.display = matchesAllTerms ? "block" : "none";
-    });
-}
-
-
-    // Clear the search input and reset filters
-    function clearSearch() {
-        document.getElementById("search").value = "";
-        filterSurveys();
-        fetchAnswers();
-    }
-
-    // Initialize the page with saved search term and add event listener with debouncing
-    window.onload = function () {
-        document.getElementById("search").addEventListener("input", debounceFetchAnswers);
-    };
-</script>
-
-
-
-</head>
-<body>
-    <div class="container">
-        <div class="main-content">
-            <h1>Available Surveys</h1>
-            <div class="search-bar">
-                <input
-                    type="text"
-                    id="search"
-                    name="search"
+            <!-- Search Bar -->
+            <div class="input-group mb-4">
+                <input 
+                    type="text" 
+                    id="search" 
+                    name="search" 
+                    class="form-control" 
                     placeholder="Search surveys by name or cell..."
+                    hx-get="{% url 'surveyapp:survey_list' %}" 
+                    hx-trigger="input delay:300ms" 
+                    hx-target="#survey-list" 
+                    hx-include="#search"
+                    hx-vals='{"target": "surveys"}'
+                    oninput="setSearchCookie()"
                 />
-                <button onclick="clearSearch()">X</button>
-            </div>            
-    
-            <ul id="survey-list">
-                {% for survey in surveys %}
-                    <li>
-                        <a href="{% url 'surveyapp:display_survey' survey.id %}">{{ survey.name }}</a>
-                        <p>{{ survey.description }}</p>
-                        <h3 class="cell">{{ survey.cell }}</h3>
-                    </li>
-                {% endfor %}
-            </ul>
+                <button class="btn btn-outline-secondary" onclick="clearSearch()">Clear</button>
+            </div>
+
+            <!-- Survey List -->
+            <div id="survey-list">
+                {% include 'surveyapp/partials/survey_list.html' %}
+            </div>
         </div>
-    
-        <div class="sidebar">
-            <h2>Your Last 5 Submitted Answers</h2>
-            <ul id="answers-list">
-                {% for answer in answers %}
-                    <li>
-                        <h2>{{ answer.survey.name }}</h2>
-                        <h3>{{ answer.survey.cell }}</h3>
-                        <p>Submitted at: {{ answer.submitted_at|date:"Y-m-d H:i:s" }}</p>
-                        <pre>{{ answer.response_data|safe }}</pre>
-                    </li>
-                {% empty %}
-                    <li>No recent submissions.</li>
-                {% endfor %}
-            </ul>
+
+        <!-- Sidebar: Last 5 Submitted Answers -->
+        <div class="col-lg-4">
+            <div class="bg-white p-4 rounded shadow">
+                <h2 class="h4 text-primary mb-4">Last 5 Submitted Answers</h2>
+                <div id="answers-list">
+                    {% include 'surveyapp/partials/answers_list.html' %}
+                </div>
+            </div>
         </div>
     </div>
-    
-</body>
-</html>
+</div>
 
+<!-- Additional HTMX trigger for updating answers -->
+<input 
+    type="hidden" 
+    id="fetch-answers" 
+    hx-get="{% url 'surveyapp:survey_list' %}" 
+    hx-trigger="input delay:300ms from:#search" 
+    hx-target="#answers-list" 
+    hx-include="#search" 
+    hx-vals='{"target": "answers"}'
+/>
+
+<!-- Include HTMX -->
+<script src="https://unpkg.com/htmx.org@1.9.12"></script>
+
+<script>
+    // Function to set the search query in a cookie (expires in 1 day)
+    function setSearchCookie() {
+        const searchValue = document.getElementById("search").value;
+        document.cookie = `search_query=${encodeURIComponent(searchValue)}; path=/; max-age=86400`; // 1 day
+    }
+
+    // Function to get the search query from a cookie
+    function getSearchCookie() {
+        const cookies = document.cookie.split('; ');
+        for (let cookie of cookies) {
+            const [name, value] = cookie.split('=');
+            if (name === 'search_query') {
+                return decodeURIComponent(value);
+            }
+        }
+        return '';
+    }
+
+    // Function to clear the search input and delete the cookie
+    function clearSearch() {
+        document.getElementById("search").value = "";
+        document.cookie = 'search_query=; path=/; max-age=0'; // Delete the cookie
+        htmx.trigger("#search", "input");
+        htmx.trigger("#fetch-answers", "input");
+    }
+
+    // Load the search query from the cookie on page load
+    document.addEventListener("DOMContentLoaded", () => {
+        const savedSearch = getSearchCookie();
+        if (savedSearch) {
+            document.getElementById("search").value = savedSearch;
+            htmx.trigger("#search", "input");
+            htmx.trigger("#fetch-answers", "input");
+        }
+    });
+</script>
+{% endblock %}

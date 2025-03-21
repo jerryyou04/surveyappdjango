@@ -1,5 +1,6 @@
 from django import forms
 import json
+from django.apps import apps
 
 class DynamicForm(forms.Form):
     def __init__(self, *args, **kwargs):
@@ -33,12 +34,14 @@ class DynamicForm(forms.Form):
             # Handle different field types
             if field_type == 'text':
                 self.fields[field_name] = forms.CharField(label=field_label, required=required)
+                widget=forms.TextInput(attrs={'class': 'form-control'})
             elif field_type == 'number':
                 min_value = field.get('min')
                 max_value = field.get('max')
                 self.fields[field_name] = forms.IntegerField(
                     label=field_label, required=required, min_value=min_value, max_value=max_value
                 )
+                widget=forms.NumberInput(attrs={'class': 'form-control'})
             elif field_type == 'choice':
                 choices = field.get('choices', [])
                 self.fields[field_name] = forms.ChoiceField(
@@ -56,7 +59,16 @@ class DynamicForm(forms.Form):
             elif field_type == 'textarea':
                 self.fields[field_name] = forms.CharField(
                     label=field_label, required=required,
-                    widget=forms.Textarea
+                    widget=forms.Textarea(attrs={'class': 'form-control'})
                 )
+            elif field_type == 'table_lookup':
+                grouping = field.get('choice_tbl_grouping')
+                if not grouping:
+                    raise ValueError(f"'choice_tbl_grouping' not specified for field '{field_name}'")
+
+                choice_tbl_model = apps.get_model('surveyapp', 'choice_tbl')
+                choices = choice_tbl_model.objects.filter(choice_tbl_grouping=grouping).values_list('choice_name', 'choice_name')
+
+                self.fields[field_name] = forms.ChoiceField(label=field_label, required=required, choices=choices, widget=forms.RadioSelect)
             else:
                 raise ValueError(f"Unsupported field type: {field_type}")

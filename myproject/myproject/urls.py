@@ -19,10 +19,13 @@ from django.urls import path, include
 from django.views.generic import TemplateView
 from django.contrib.auth import views as auth_views
 
-from surveyapp.views import index
+from surveyapp.views import index, profile
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('survey/', include('surveyapp.urls')),
     path('', index, name='index'),
+    path('accounts/', include('django.contrib.auth.urls')),
+    path('accounts/profile/', profile, name='profile'),
+
 ]
